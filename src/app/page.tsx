@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import FeedList from '@/components/FeedList';
 import ArticleList from '@/components/ArticleList';
+import ArticlePreview from '@/components/ArticlePreview';
 import { Feed, Article } from '@/lib/db';
 
 export default function Home() {
@@ -12,6 +13,8 @@ export default function Home() {
   const [selectedFeedId, setSelectedFeedId] = useState<number | null>(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     fetchFeeds();
@@ -74,6 +77,16 @@ export default function Home() {
     }
   };
 
+  const handleArticleClick = (article: Article) => {
+    setPreviewArticle(article);
+    setIsPreviewOpen(true);
+  };
+
+  const handlePreviewClose = () => {
+    setIsPreviewOpen(false);
+    setPreviewArticle(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -131,11 +144,19 @@ export default function Home() {
                 articles={articles}
                 loading={loading}
                 onArticleRead={handleArticleRead}
+                onArticleClick={handleArticleClick}
               />
             </div>
           </div>
         </div>
       </div>
+
+      <ArticlePreview
+        article={previewArticle}
+        isOpen={isPreviewOpen}
+        onClose={handlePreviewClose}
+        onMarkAsRead={handleArticleRead}
+      />
     </div>
   );
 }

@@ -6,9 +6,10 @@ interface ArticleListProps {
   articles: Article[];
   loading: boolean;
   onArticleRead: (articleId: number) => void;
+  onArticleClick?: (article: Article) => void;
 }
 
-export default function ArticleList({ articles, loading, onArticleRead }: ArticleListProps) {
+export default function ArticleList({ articles, loading, onArticleRead, onArticleClick }: ArticleListProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
@@ -27,12 +28,16 @@ export default function ArticleList({ articles, loading, onArticleRead }: Articl
   };
 
   const handleArticleClick = (article: Article) => {
-    if (!article.is_read) {
-      onArticleRead(article.id);
-    }
-    
-    if (article.link) {
-      window.open(article.link, '_blank', 'noopener,noreferrer');
+    if (onArticleClick) {
+      onArticleClick(article);
+    } else {
+      if (!article.is_read) {
+        onArticleRead(article.id);
+      }
+      
+      if (article.link) {
+        window.open(article.link, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 
@@ -102,9 +107,10 @@ export default function ArticleList({ articles, loading, onArticleRead }: Articl
                 )}
                 <span className="flex items-center">
                   <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
-                  外部リンク
+                  {onArticleClick ? 'プレビュー' : '外部リンク'}
                 </span>
               </div>
             </div>
