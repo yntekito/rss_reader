@@ -11,7 +11,7 @@ export default function Home() {
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedFeedId, setSelectedFeedId] = useState<number | null>(null);
-  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(true);
   const [loading, setLoading] = useState(true);
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -68,13 +68,20 @@ export default function Home() {
     setSelectedFeedId(null);
   };
 
-  const handleArticleRead = async (articleId: number) => {
+  const handleArticleRead = async (articleId: number, skipRefresh: boolean = false) => {
     try {
       await fetch(`/api/articles/${articleId}/read`, { method: 'PUT' });
-      await fetchArticles();
+      if (!skipRefresh) {
+        await fetchArticles();
+      }
     } catch (error) {
       console.error('Error marking article as read:', error);
     }
+  };
+
+  const handleScrollBasedRead = async (articleId: number) => {
+    // Mark as read without refreshing the article list
+    await handleArticleRead(articleId, true);
   };
 
   const handleArticleClick = (article: Article) => {
@@ -112,7 +119,7 @@ export default function Home() {
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                {showUnreadOnly ? '未読のみ' : '全記事'}
+{showUnreadOnly ? '未読のみ' : '既読も表示'}
               </button>
               <button
                 onClick={refreshFeeds}
@@ -144,6 +151,7 @@ export default function Home() {
                 articles={articles}
                 loading={loading}
                 onArticleRead={handleArticleRead}
+                onScrollBasedRead={handleScrollBasedRead}
                 onArticleClick={handleArticleClick}
               />
             </div>

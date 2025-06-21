@@ -1,15 +1,82 @@
 'use client';
 
+import { useRef, useEffect, useState } from 'react';
 import { Article } from '@/lib/db';
 
 interface ArticleListProps {
   articles: Article[];
   loading: boolean;
   onArticleRead: (articleId: number) => void;
+  onScrollBasedRead?: (articleId: number) => void;
   onArticleClick?: (article: Article) => void;
 }
 
-export default function ArticleList({ articles, loading, onArticleRead, onArticleClick }: ArticleListProps) {
+export default function ArticleList({ articles, loading, onArticleRead, onScrollBasedRead, onArticleClick }: ArticleListProps) {
+  const markedAsReadRef = useRef<Set<number>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [localReadStatus, setLocalReadStatus] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    const checkVisibleArticles = () => {
+      if (!containerRef.current) return;
+      
+      const articleElements = containerRef.current.querySelectorAll('[data-article-id]');
+      
+      articleElements.forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        // Check if article has scrolled past the top of the viewport
+        if (rect.top < 0) {
+          const articleId = parseInt((element as HTMLElement).dataset.articleId || '0');
+          
+          if (articleId && !markedAsReadRef.current.has(articleId)) {
+            const article = articles.find(a => a.id === articleId);
+            if (article && !article.is_read && !localReadStatus.has(articleId)) {
+              console.log('Marking article as read via scroll:', articleId);
+              markedAsReadRef.current.add(articleId);
+              
+              // Update local state to show as read immediately
+              setLocalReadStatus(prev => new Set([...prev, articleId]));
+              
+              // Use scroll-based read handler if available
+              if (onScrollBasedRead) {
+                onScrollBasedRead(articleId);
+              } else {
+                onArticleRead(articleId);
+              }
+            }
+          }
+        }
+      });
+    };
+
+    const handleScroll = () => {
+      requestAnimationFrame(checkVisibleArticles);
+    };
+
+    // Add scroll listeners
+    window.addEventListener('scroll', handleScroll);
+    const scrollContainer = containerRef.current?.closest('.overflow-y-auto');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+    }
+
+    // Initial check
+    checkVisibleArticles();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [articles, onArticleRead, onScrollBasedRead, localReadStatus]);
+
+  useEffect(() => {
+    // Clear marked articles when articles list changes
+    markedAsReadRef.current.clear();
+    setLocalReadStatus(new Set());
+  }, [articles]);
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
@@ -69,31 +136,36 @@ export default function ArticleList({ articles, loading, onArticleRead, onArticl
   }
 
   return (
-    <div className="divide-y divide-gray-200">
-      {articles.map((article) => (
-        <article
-          key={article.id}
-          className={`p-6 cursor-pointer transition-colors hover:bg-gray-50 ${
-            article.is_read ? 'opacity-75' : ''
-          }`}
-          onClick={() => handleArticleClick(article)}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2 mb-2">
-                {!article.is_read && (
-                  <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
-                )}
-                <h2 className={`text-lg font-semibold ${
-                  article.is_read ? 'text-gray-600' : 'text-gray-900'
-                } line-clamp-2`}>
-                  {article.title}
-                </h2>
-              </div>
-              
-              {article.description && (
-                <p className={`text-sm ${
-                  article.is_read ? 'text-gray-500' : 'text-gray-700'
+    <div ref={containerRef} className="divide-y divide-gray-200">
+      {articles.map((article) => {
+        const isLocallyRead = localReadStatus.has(article.id);
+        const isRead = article.is_read || isLocallyRead;
+        
+        return (
+          <article
+            key={article.id}
+            data-article-id={article.id}
+            className={`p-6 cursor-pointer transition-colors hover:bg-gray-50 ${
+              isRead ? 'opacity-75' : ''
+            }`}
+            onClick={() => handleArticleClick(article)}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2 mb-2">
+                  {!isRead && (
+                    <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                  )}
+                  <h2 className={`text-lg font-semibold ${
+                    isRead ? 'text-gray-600' : 'text-gray-900'
+                  } line-clamp-2`}>
+                    {article.title}
+                  </h2>
+                </div>
+                
+                {article.description && (
+                  <p className={`text-sm ${
+                    isRead ? 'text-gray-500' : 'text-gray-700'
                 } line-clamp-3 mb-3`}>
                   {article.description}
                 </p>
@@ -122,17 +194,18 @@ export default function ArticleList({ articles, loading, onArticleRead, onArticl
                   onArticleRead(article.id);
                 }}
                 className={`text-xs px-2 py-1 rounded-full ${
-                  article.is_read
+                  isRead
                     ? 'bg-gray-100 text-gray-600'
                     : 'bg-blue-100 text-blue-800'
                 }`}
               >
-                {article.is_read ? '既読' : '未読'}
+                {isRead ? '既読' : '未読'}
               </button>
             </div>
           </div>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }
