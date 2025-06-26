@@ -16,7 +16,16 @@ export async function GET(
       );
     }
     
-    const articles = articleQueries.getAll.all() as { id: number; title: string; content?: string; description?: string; link?: string }[];
+    const articles = articleQueries.getAll.all() as { 
+      id: number; 
+      title: string; 
+      content?: string; 
+      description?: string; 
+      full_content?: string;
+      content_downloaded: boolean;
+      featured_image?: string;
+      link?: string;
+    }[];
     const article = articles.find(a => a.id === articleId);
     
     if (!article) {
@@ -26,12 +35,16 @@ export async function GET(
       );
     }
 
-    // Return RSS data immediately
+    // If we have downloaded content, use it; otherwise use RSS content
+    const hasFullContent = article.content_downloaded && article.full_content;
+    
     return NextResponse.json({
       title: article.title,
-      content: article.content || article.description || '',
+      content: hasFullContent ? article.full_content : (article.content || article.description || ''),
       excerpt: article.description || '',
-      isRssOnly: true, // Flag to indicate this is RSS-only data
+      isRssOnly: !hasFullContent,
+      isFullContent: hasFullContent,
+      featuredImage: article.featured_image,
       link: article.link,
     });
 

@@ -28,10 +28,19 @@ export default function Home() {
   const fetchFeeds = async () => {
     try {
       const response = await fetch('/api/feeds');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
-      setFeeds(data);
+      if (Array.isArray(data)) {
+        setFeeds(data);
+      } else {
+        console.error('Feeds data is not an array:', data);
+        setFeeds([]);
+      }
     } catch (error) {
       console.error('Error fetching feeds:', error);
+      setFeeds([]);
     }
   };
 
@@ -43,10 +52,19 @@ export default function Home() {
       if (showUnreadOnly) params.append('unreadOnly', 'true');
       
       const response = await fetch(`/api/articles?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
-      setArticles(data);
+      if (Array.isArray(data)) {
+        setArticles(data);
+      } else {
+        console.error('Articles data is not an array:', data);
+        setArticles([]);
+      }
     } catch (error) {
       console.error('Error fetching articles:', error);
+      setArticles([]);
     } finally {
       setLoading(false);
     }

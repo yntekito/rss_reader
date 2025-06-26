@@ -32,13 +32,29 @@ export default function AddFeedForm({ onFeedAdded }: AddFeedFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error('フィードの追加に失敗しました');
+        let errorMessage = `フィードの追加に失敗しました (${response.status})`;
+        try {
+          const errorData = await response.json();
+          console.error('API Error Response:', errorData);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          const text = await response.text();
+          console.error('Raw error response:', text);
+        }
+        throw new Error(errorMessage);
       }
 
       setUrl('');
       onFeedAdded();
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'エラーが発生しました');
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        setError('ネットワークエラーが発生しました。接続を確認してください。');
+      } else {
+        setError(error instanceof Error ? error.message : 'エラーが発生しました');
+      }
     } finally {
       setLoading(false);
     }

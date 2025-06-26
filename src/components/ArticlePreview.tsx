@@ -38,7 +38,18 @@ export default function ArticlePreview({ article, isOpen, onClose, onMarkAsRead 
       if (!article.is_read) {
         onMarkAsRead(article.id);
       }
+      
+      // Prevent body scroll when preview is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore body scroll when preview is closed
+      document.body.style.overflow = 'unset';
     }
+    
+    // Cleanup function to restore scroll on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [article, isOpen]);
 
   useEffect(() => {
@@ -230,11 +241,22 @@ export default function ArticlePreview({ article, isOpen, onClose, onMarkAsRead 
                 {/* Article Content */}
                 {content?.content ? (
                   <div 
-                    className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
+                    className="prose prose-lg max-w-none text-black
+                    prose-headings:!text-black prose-headings:font-semibold
+                    prose-p:!text-black prose-p:leading-relaxed prose-p:text-base
+                    prose-a:!text-blue-600 prose-a:underline hover:prose-a:text-blue-800
+                    prose-strong:!text-black prose-strong:font-semibold
+                    prose-em:!text-black prose-em:italic
+                    prose-ul:!text-black prose-ol:!text-black
+                    prose-li:!text-black prose-li:leading-relaxed
+                    prose-blockquote:!text-black prose-blockquote:border-gray-300
+                    prose-code:!text-black prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded
+                    prose-pre:bg-gray-900 prose-pre:!text-gray-100
+                    [&_*]:!text-black [&_a]:!text-blue-600"
                     dangerouslySetInnerHTML={{ __html: content.content }}
                   />
                 ) : article.description ? (
-                  <div className="text-gray-700 leading-relaxed">
+                  <div className="text-black leading-relaxed text-base">
                     {article.description}
                   </div>
                 ) : (

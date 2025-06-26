@@ -17,6 +17,13 @@ export async function GET(request: NextRequest) {
       articles = articleQueries.getAll.all();
     }
     
+    console.log('Fetched', articles.length, 'articles');
+    if (articles.length > 0) {
+      const firstArticle = articles[0] as any;
+      console.log('First article featured_image:', firstArticle.featured_image);
+      console.log('First article content_downloaded:', firstArticle.content_downloaded);
+    }
+    
     return NextResponse.json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error);

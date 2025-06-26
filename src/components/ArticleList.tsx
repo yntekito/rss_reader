@@ -145,12 +145,27 @@ export default function ArticleList({ articles, loading, onArticleRead, onScroll
           <article
             key={article.id}
             data-article-id={article.id}
-            className={`p-6 cursor-pointer transition-colors hover:bg-gray-50 ${
+            className={`p-6 cursor-pointer transition-colors hover:bg-gray-50 min-h-[120px] ${
               isRead ? 'opacity-75' : ''
             }`}
             onClick={() => handleArticleClick(article)}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex space-x-4">
+              {/* サムネイル画像 - 左上に大きく表示 */}
+              {article.featured_image && (
+                <div className="flex-shrink-0">
+                  <img
+                    src={`/api/${article.featured_image}`}
+                    alt=""
+                    className="w-32 h-24 sm:w-40 sm:h-28 object-cover rounded-lg shadow-sm"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              
+              {/* コンテンツ部分 */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2 mb-2">
                   {!isRead && (
@@ -166,43 +181,44 @@ export default function ArticleList({ articles, loading, onArticleRead, onScroll
                 {article.description && (
                   <p className={`text-sm ${
                     isRead ? 'text-gray-500' : 'text-gray-700'
-                } line-clamp-3 mb-3`}>
-                  {article.description}
-                </p>
-              )}
-              
-              <div className="flex items-center text-xs text-gray-500 space-x-4">
-                {article.pub_date && (
-                  <time dateTime={article.pub_date}>
-                    {formatDate(article.pub_date)}
-                  </time>
+                  } line-clamp-3 mb-3`}>
+                    {article.description}
+                  </p>
                 )}
-                <span className="flex items-center">
-                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  {onArticleClick ? 'プレビュー' : '外部リンク'}
-                </span>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-xs text-gray-500 space-x-4">
+                    {article.pub_date && (
+                      <time dateTime={article.pub_date}>
+                        {formatDate(article.pub_date)}
+                      </time>
+                    )}
+                    <span className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      {onArticleClick ? 'プレビュー' : '外部リンク'}
+                    </span>
+                  </div>
+                  
+                  {/* 既読/未読ボタン */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArticleRead(article.id);
+                    }}
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      isRead
+                        ? 'bg-gray-100 text-gray-600'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
+                    {isRead ? '既読' : '未読'}
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div className="ml-4 flex-shrink-0">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onArticleRead(article.id);
-                }}
-                className={`text-xs px-2 py-1 rounded-full ${
-                  isRead
-                    ? 'bg-gray-100 text-gray-600'
-                    : 'bg-blue-100 text-blue-800'
-                }`}
-              >
-                {isRead ? '既読' : '未読'}
-              </button>
-            </div>
-          </div>
         </article>
         );
       })}

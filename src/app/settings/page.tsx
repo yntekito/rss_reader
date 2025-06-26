@@ -41,13 +41,22 @@ export default function SettingsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('フィードの削除に失敗しました');
+        let errorMessage = 'フィードの削除に失敗しました';
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // JSON parse failed, use default message
+        }
+        throw new Error(errorMessage);
       }
 
       fetchFeeds();
     } catch (error) {
       console.error('Error deleting feed:', error);
-      alert('フィードの削除に失敗しました');
+      alert(error instanceof Error ? error.message : 'フィードの削除に失敗しました');
     }
   };
 
@@ -58,13 +67,22 @@ export default function SettingsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('フィードの更新に失敗しました');
+        let errorMessage = 'フィードの更新に失敗しました';
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // JSON parse failed, use default message
+        }
+        throw new Error(errorMessage);
       }
 
       alert('フィードを更新しました');
     } catch (error) {
       console.error('Error refreshing feed:', error);
-      alert('フィードの更新に失敗しました');
+      alert(error instanceof Error ? error.message : 'フィードの更新に失敗しました');
     }
   };
 
@@ -72,12 +90,43 @@ export default function SettingsPage() {
     try {
       const response = await fetch('/api/feeds', { method: 'PUT' });
       if (!response.ok) {
-        throw new Error('フィードの更新に失敗しました');
+        let errorMessage = 'フィードの更新に失敗しました';
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // JSON parse failed, use default message
+        }
+        throw new Error(errorMessage);
       }
       alert('すべてのフィードを更新しました');
     } catch (error) {
       console.error('Error refreshing feeds:', error);
-      alert('フィードの更新に失敗しました');
+      alert(error instanceof Error ? error.message : 'フィードの更新に失敗しました');
+    }
+  };
+
+  const handleCleanupOldContent = async () => {
+    if (!confirm('1週間以上経過した記事のコンテンツと画像を削除します。この操作は元に戻せません。続行しますか？')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/cleanup', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('クリーンアップに失敗しました');
+      }
+
+      const result = await response.json();
+      alert(result.message || 'クリーンアップが完了しました');
+    } catch (error) {
+      console.error('Error cleaning up old content:', error);
+      alert('クリーンアップに失敗しました');
     }
   };
 
@@ -108,6 +157,97 @@ export default function SettingsPage() {
           {/* Add Feed Section */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <AddFeedForm onFeedAdded={handleFeedAdded} />
+          </div>
+
+          {/* Debug Section */}
+          <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">デバッグ</h2>
+            <div className="flex space-x-4">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/feeds');
+                    const data = await response.json();
+                    console.log('Feeds API response:', data);
+                    alert(`Feeds GET Test: ${JSON.stringify(data)}`);
+                  } catch (error) {
+                    console.error('Feeds API error:', error);
+                    alert(`Feeds GET Test Error: ${error}`);
+                  }
+                }}
+                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors text-sm"
+              >
+                Test Feeds GET
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    console.log('Starting manual content download...');
+                    const response = await fetch('/api/process-downloads', { 
+                      method: 'POST' 
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                      alert('コンテンツダウンロード処理が完了しました。コンソールログを確認してください。');
+                    } else {
+                      alert(`エラー: ${data.error}`);
+                    }
+                  } catch (error) {
+                    console.error('Content download error:', error);
+                    alert(`Content Download Error: ${error}`);
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+              >
+                Force Content Download
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    if (!confirm('すべての記事のダウンロード状態をリセットします。続行しますか？')) {
+                      return;
+                    }
+                    console.log('Resetting download flags...');
+                    const response = await fetch('/api/reset-downloads', { 
+                      method: 'POST' 
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                      alert(`${data.resetCount}件の記事をリセットしました。`);
+                    } else {
+                      alert(`エラー: ${data.error}`);
+                    }
+                  } catch (error) {
+                    console.error('Reset error:', error);
+                    alert(`Reset Error: ${error}`);
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Reset Downloads
+              </button>
+            </div>
+          </div>
+
+          {/* Cleanup Section */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">ストレージ管理</h2>
+            <div className="flex items-start space-x-4">
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 mb-2">
+                  1週間以上経過した記事のコンテンツと画像を削除してストレージ容量を節約できます。
+                </p>
+                <p className="text-xs text-gray-500">
+                  この操作により、記事のタイトルと概要は残りますが、ダウンロード済みの本文と画像は削除されます。
+                </p>
+              </div>
+              <button
+                onClick={handleCleanupOldContent}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                古いコンテンツを削除
+              </button>
+            </div>
           </div>
 
           {/* Feed List Section */}
