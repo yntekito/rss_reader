@@ -64,7 +64,17 @@ export default function FeedList({ feeds, selectedFeedId, onFeedSelect, onFeedDe
               : 'hover:bg-gray-100'
           }`}
         >
-          すべてのフィード
+          <div className="flex items-center justify-between">
+            <span>すべてのフィード</span>
+            {(() => {
+              const totalUnread = feeds.reduce((sum, feed) => sum + (feed.unreadCount || 0), 0);
+              return totalUnread > 0 ? (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2 flex-shrink-0">
+                  {totalUnread}
+                </span>
+              ) : null;
+            })()}
+          </div>
         </button>
         
         {feeds.length === 0 ? (
@@ -85,7 +95,14 @@ export default function FeedList({ feeds, selectedFeedId, onFeedSelect, onFeedDe
                 onClick={() => onFeedSelect(feed.id)}
                 className="w-full text-left px-3 py-2 pr-16"
               >
-                <div className="font-medium truncate">{feed.title}</div>
+                <div className="flex items-center justify-between">
+                  <div className="font-medium truncate flex-1">{feed.title}</div>
+                  {feed.unreadCount !== undefined && feed.unreadCount > 0 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2 flex-shrink-0">
+                      {feed.unreadCount}
+                    </span>
+                  )}
+                </div>
                 {feed.description && (
                   <div className="text-sm text-gray-500 truncate mt-1">
                     {feed.description}

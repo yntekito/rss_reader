@@ -10,6 +10,7 @@ export interface Feed {
   description?: string;
   created_at: string;
   updated_at: string;
+  unreadCount?: number;
 }
 
 export interface Article {
@@ -108,6 +109,8 @@ export const articleQueries = {
   getAll: db.prepare('SELECT * FROM articles ORDER BY pub_date DESC'),
   getByFeedId: db.prepare('SELECT * FROM articles WHERE feed_id = ? ORDER BY pub_date DESC'),
   getUnread: db.prepare('SELECT * FROM articles WHERE is_read = FALSE ORDER BY pub_date DESC'),
+  getUnreadByFeedId: db.prepare('SELECT * FROM articles WHERE feed_id = ? AND is_read = FALSE ORDER BY pub_date DESC'),
+  getUnreadCountByFeedId: db.prepare('SELECT COUNT(*) as count FROM articles WHERE feed_id = ? AND is_read = FALSE'),
   getUndownloaded: db.prepare('SELECT * FROM articles WHERE content_downloaded = FALSE AND is_read = FALSE ORDER BY pub_date DESC'),
   insert: db.prepare('INSERT INTO articles (feed_id, title, description, content, link, pub_date) VALUES (?, ?, ?, ?, ?, ?)'),
   updateFullContent: db.prepare('UPDATE articles SET full_content = ?, featured_image = ?, content_downloaded = TRUE, content_downloaded_at = CURRENT_TIMESTAMP WHERE id = ?'),

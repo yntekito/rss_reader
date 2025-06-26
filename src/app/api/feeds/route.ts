@@ -1,17 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { feedQueries } from '@/lib/db';
+import { feedQueries, articleQueries } from '@/lib/db';
 import { addFeed, refreshAllFeeds } from '@/lib/rss';
 
 export async function GET() {
-  console.log('GET /api/feeds called');
   try {
-    console.log('Calling feedQueries.getAll.all()...');
-    const feeds = feedQueries.getAll.all();
-    console.log('Feeds fetched successfully:', feeds.length);
-    return NextResponse.json(feeds);
+    const feeds = feedQueries.getAll.all() as any[];
+    
+    if (!feeds || feeds.length === 0) {
+      return NextResponse.json([]);
+    }
+    
+    // Add unread count to each feed
+    const feedsWithUnreadCount = feeds.map(feed => {
+      try {
+        const unreadCountResult = articleQueries.getUnreadCountByFeedId.get(feed.id) as { count: number } | undefined;
+        return {
+          ...feed,
+          unreadCount: unreadCountResult?.count || 0
+        };
+      } catch (error) {
+        console.error('Error getting unread count for feed', feed.id, error);
+        return {
+          ...feed,
+          unreadCount: 0
+        };
+      }
+    });
+    
+    return NextResponse.json(feedsWithUnreadCount);
   } catch (error) {
     console.error('Error fetching feeds:', error);
-    console.error('Error details:', error);
     return NextResponse.json(
       { error: `Failed to fetch feeds: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }

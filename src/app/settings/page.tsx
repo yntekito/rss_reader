@@ -289,9 +289,16 @@ export default function SettingsPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-medium text-gray-900 truncate">
-                            {feed.title}
-                          </h3>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-lg font-medium text-gray-900 truncate">
+                              {feed.title}
+                            </h3>
+                            {feed.unreadCount !== undefined && feed.unreadCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {feed.unreadCount}
+                              </span>
+                            )}
+                          </div>
                           {feed.description && (
                             <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                               {feed.description}

@@ -7,22 +7,25 @@ export async function GET(request: NextRequest) {
     const feedId = searchParams.get('feedId');
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
     
+    console.log('Articles API called with feedId:', feedId, 'unreadOnly:', unreadOnly);
+    
     let articles;
     
-    if (unreadOnly) {
+    if (feedId && unreadOnly) {
+      // Get unread articles for specific feed
+      articles = articleQueries.getUnreadByFeedId.all(parseInt(feedId));
+    } else if (unreadOnly) {
+      // Get all unread articles
       articles = articleQueries.getUnread.all();
     } else if (feedId) {
+      // Get all articles for specific feed
       articles = articleQueries.getByFeedId.all(parseInt(feedId));
     } else {
+      // Get all articles
       articles = articleQueries.getAll.all();
     }
     
-    console.log('Fetched', articles.length, 'articles');
-    if (articles.length > 0) {
-      const firstArticle = articles[0] as any;
-      console.log('First article featured_image:', firstArticle.featured_image);
-      console.log('First article content_downloaded:', firstArticle.content_downloaded);
-    }
+    console.log('Fetched', articles.length, 'articles for feedId:', feedId, 'unreadOnly:', unreadOnly);
     
     return NextResponse.json(articles);
   } catch (error) {
